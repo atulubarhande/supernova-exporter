@@ -19,7 +19,7 @@ import {
   TextDecorationToken,
   VisibilityToken,
 } from "@supernovaio/sdk-exporters"
-import { ExporterConfiguration } from "../../config"
+import { ExporterConfiguration, TokenNamingStrategy } from "../../config"
 
 export type TokenJsonEntry = {
   value: any
@@ -44,13 +44,60 @@ const COLOR_FORMAT_MAP: Record<ExporterConfiguration["colorFormat"], ColorFormat
   hsla: ColorFormat.hsla,
 }
 
-export function tokenName(
+function applyTokenNameStyle(fragments: Array<string>, nameStyle: ExporterConfiguration["tokenNameStyle"]): string {
+  return NamingHelper.codeSafeVariableName(fragments, STRING_CASE_MAP[nameStyle])
+}
+
+function groupNamesRootToLeaf(parentGroupId: string | null, groups: Array<TokenGroup>): Array<string> {
+  const chain: Array<string> = []
+  let currentId: string | null = parentGroupId
+  while (currentId) {
+    const g = groups.find((x) => x.id === currentId)
+    if (!g) break
+    chain.push(g.name)
+    currentId = g.parentGroupId
+  }
+  chain.reverse()
+  return chain
+}
+
+function namingFragments(
+  strategy: TokenNamingStrategy,
   token: Token,
-  tokenGroups: Array<TokenGroup>,
-  nameStyle: ExporterConfiguration["tokenNameStyle"]
-): string {
-  const parent = tokenGroups.find((g) => g.id === token.parentGroupId) ?? null
-  return NamingHelper.codeSafeVariableNameForToken(token, STRING_CASE_MAP[nameStyle], parent, null)
+  tokenGroups: Array<TokenGroup>
+): Array<string> {
+  switch (strategy) {
+    case "fullHierarchy":
+      return []
+    case "tokenOnly":
+      return [token.name]
+    case "supernovaPath": {
+      const tp = token.tokenPath
+      return tp && tp.length > 0 ? [...tp] : [token.name]
+    }
+    case "supernovaPathAndName": {
+      const tp = token.tokenPath ?? []
+      return tp.length > 0 ? [...tp, token.name] : [token.name]
+    }
+    case "immediateParentAndToken": {
+      const parent = tokenGroups.find((g) => g.id === token.parentGroupId) ?? null
+      return parent ? [parent.name, token.name] : [token.name]
+    }
+    case "fullGroupChainAndToken":
+      return [...groupNamesRootToLeaf(token.parentGroupId, tokenGroups), token.name]
+    default:
+      return [token.name]
+  }
+}
+
+export function tokenName(token: Token, tokenGroups: Array<TokenGroup>, config: ExporterConfiguration): string {
+  const style = config.tokenNameStyle
+  if (config.tokenNamingStrategy === "fullHierarchy") {
+    const parent = tokenGroups.find((g) => g.id === token.parentGroupId) ?? null
+    return NamingHelper.codeSafeVariableNameForToken(token, STRING_CASE_MAP[style], parent, null)
+  }
+  const fragments = namingFragments(config.tokenNamingStrategy, token, tokenGroups)
+  return applyTokenNameStyle(fragments, style)
 }
 
 export function tokenTypeName(tokenType: TokenType): string {

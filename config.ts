@@ -3,9 +3,19 @@
  * Default values for it can be set through `config.json`
  * Users can override the behavior when creating the pipelines or by creating `config.local.json` file specifying actual values.
  */
+export type TokenNamingStrategy =
+  | "fullHierarchy"
+  | "tokenOnly"
+  | "supernovaPath"
+  | "supernovaPathAndName"
+  | "immediateParentAndToken"
+  | "fullGroupChainAndToken"
+
 export type ExporterConfiguration = {
   generateDisclaimer: boolean
   tokenNameStyle: "camelCase" | "kebabCase" | "snakeCase"
+  /** Which segments to use when building each token key (before tokenNameStyle is applied) */
+  tokenNamingStrategy: TokenNamingStrategy
   colorFormat: "hex" | "rgba" | "hsla"
   includeDescriptions: boolean
   splitByTokenType: boolean

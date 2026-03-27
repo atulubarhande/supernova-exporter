@@ -64,7 +64,7 @@ function buildTokenEntries(
 ): Record<string, TokenJsonEntry> {
   const result: Record<string, TokenJsonEntry> = {}
   for (const token of tokens) {
-    const name = tokenName(token, tokenGroups, exportConfiguration.tokenNameStyle)
+    const name = tokenName(token, tokenGroups, exportConfiguration)
     const converted = convertToken(token, exportConfiguration)
     if (converted === null) continue
 

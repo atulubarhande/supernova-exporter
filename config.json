@@ -15,6 +15,21 @@
     "description": "The naming convention used for token keys in the JSON output"
   },
   {
+    "key": "tokenNamingStrategy",
+    "type": "enum",
+    "options": [
+      "fullHierarchy",
+      "tokenOnly",
+      "supernovaPath",
+      "supernovaPathAndName",
+      "immediateParentAndToken",
+      "fullGroupChainAndToken"
+    ],
+    "default": "fullHierarchy",
+    "title": "Token naming strategy",
+    "description": "How to build each key from Supernova data: fullHierarchy = group path + parent group name + token name (default, matches Supernova export helpers); tokenOnly = token name only; supernovaPath = token.tokenPath only when set; supernovaPathAndName = tokenPath segments + token name; immediateParentAndToken = direct parent group + token name; fullGroupChainAndToken = all ancestor group names root-to-leaf + token name"
+  },
+  {
     "key": "colorFormat",
     "type": "enum",
     "options": ["hex", "rgba", "hsla"],

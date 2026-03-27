@@ -1,6 +1,7 @@
 {
   "generateDisclaimer": true,
   "tokenNameStyle": "camelCase",
+  "tokenNamingStrategy": "fullHierarchy",
   "colorFormat": "hex",
   "includeDescriptions": true,
   "splitByTokenType": false,

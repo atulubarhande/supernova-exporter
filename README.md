@@ -70,6 +70,7 @@ When `splitByTokenType` is enabled, each type gets its own file (e.g. `color.jso
 |---|---|---|---|
 | `generateDisclaimer` | boolean | `true` | Adds a `_comment` field indicating the file is auto-generated |
 | `tokenNameStyle` | enum | `camelCase` | Naming convention for token keys: `camelCase`, `kebabCase`, or `snakeCase` |
+| `tokenNamingStrategy` | enum | `fullHierarchy` | How keys are built from Supernova: `fullHierarchy` (group `path` + parent name + token name, same as default export helpers); `tokenOnly`; `supernovaPath` (`token.tokenPath` only when set); `supernovaPathAndName` (`tokenPath` + token name); `immediateParentAndToken` (parent group + token); `fullGroupChainAndToken` (all ancestor groups root→leaf + token name). |
 | `colorFormat` | enum | `hex` | Color output format: `hex`, `rgba`, or `hsla` |
 | `includeDescriptions` | boolean | `true` | Includes token descriptions in the output |
 | `splitByTokenType` | boolean | `false` | Generates separate files per token type instead of a single `tokens.json` |
@@ -84,7 +85,8 @@ Override defaults by editing `config.local.json`:
   "colorFormat": "rgba",
   "splitByTokenType": true,
   "lengthOutputUnit": "rem",
-  "remRootPx": 16
+  "remRootPx": 16,
+  "tokenNamingStrategy": "supernovaPathAndName"
 }
 ```
 

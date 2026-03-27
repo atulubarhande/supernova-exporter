@@ -5,6 +5,7 @@ All the updates to this exporter are documented in this file.
 
 ### New
 
+- `tokenNamingStrategy` to control how keys are built (full hierarchy, token only, Supernova `tokenPath`, parent group, full group chain, etc.)
 - `lengthOutputUnit` (`preserve` | `px` | `rem`) and `remRootPx` for normalizing applicable lengths
 
 ## 1.0.0
