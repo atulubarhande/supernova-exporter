@@ -1,3 +1,7 @@
 {
-    "generateDisclaimer": true
+  "generateDisclaimer": true,
+  "tokenNameStyle": "camelCase",
+  "colorFormat": "hex",
+  "includeDescriptions": true,
+  "splitByTokenType": false
 }

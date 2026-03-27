@@ -1,16 +1,16 @@
 {
-    "id": "[Promobi Technologies].exporter-json",
+    "id": "promobi-technologies.exporter-json",
     "name": "JSON Exporter",
-    "description": "Export your design system data into [JSON / TECHNOLOGY]",
-    "author": "[AUTHOR_NAME]",
-    "organization": "[Promobi Technologies]",
-    "homepage": "[COMPANY_WEBSITE or delete]",
+    "description": "Export your design system tokens into structured JSON format",
+    "author": "Promobi Technologies",
+    "organization": "Promobi Technologies",
     "version": "1.0.0",
     "usesBrands": true,
     "usesThemes": true,
     "executable": "/dist/build.js",
     "engine": "latest",
     "tags": [
-        "[ANYTHING_YOU_WANT, like 'Tokens', 'Assets' etc.]"
+        "Tokens",
+        "JSON"
     ]
 }

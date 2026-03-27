@@ -1,32 +1,93 @@
-# Your Exporter
+# JSON Exporter for Supernova
 
-This exporter will become super powerful package that exports design system data into production-ready code. When you are ready to publish it, don't forget to write a nice Readme!
+A custom [Supernova](https://supernova.io) exporter that outputs all design tokens as structured JSON.
 
-## Exporter Features
+## Supported Token Types
 
-Here are the key features of this exporter:
+- **Color** -- hex, rgba, or hsla output
+- **Typography** -- atomic output: each sub-property (fontFamily, fontWeight, fontSize, lineHeight, letterSpacing, textCase, textDecoration) becomes its own token for easy Bootstrap/SCSS variable mapping
+- **Shadow** -- single or multi-layer with color, offsets, blur, spread
+- **Border** -- color, width, style, position
+- **Gradient** -- linear/radial/angular with color stops
+- **Blur** -- layer or background blur with radius
+- **Dimension-like** -- dimension, size, space, opacity, fontSize, lineHeight, letterSpacing, paragraphSpacing, borderWidth, borderRadius, duration, zIndex
+- **String-like** -- string, productCopy, fontFamily, fontWeight
+- **Option-like** -- textCase, textDecoration, visibility
 
-- **Support for X:** Generates X from your design system
-- **Support for Y:** It also supports Y!
+## Example Output
 
-## Example of Output
+Given a design system with tokens, the exporter produces:
 
-Given any design system, the exporter will produce CSS color definitions in the following format:
-
-```css
-/* This file was automatically generated. Do not modify manually. */
-
-:root {
-  /* The reddest of reds */
-  --color-red: #ff0000;
-  --color-blue: #0000ff;
-  /* The main color used throughout the application. */
-  --color-primary: var(--color-red);
+```json
+{
+  "color": {
+    "colorPrimary": {
+      "value": "#3366ffff",
+      "type": "color",
+      "description": "Primary brand color"
+    },
+    "colorSecondary": {
+      "value": "#ff6633ff",
+      "type": "color"
+    }
+  },
+  "dimension": {
+    "spacingSmall": {
+      "value": "8px",
+      "type": "dimension"
+    }
+  },
+  "typography": {
+    "headingFontFamily": {
+      "value": "Inter",
+      "type": "fontFamily"
+    },
+    "headingFontWeight": {
+      "value": "700",
+      "type": "fontWeight"
+    },
+    "headingFontSize": {
+      "value": "24px",
+      "type": "fontSize"
+    },
+    "headingLineHeight": {
+      "value": "32px",
+      "type": "lineHeight"
+    },
+    "headingLetterSpacing": {
+      "value": "0px",
+      "type": "letterSpacing"
+    }
+  }
 }
 ```
 
+When `splitByTokenType` is enabled, each type gets its own file (e.g. `color.json`, `typography.json`, `dimension.json`).
+
 ## Configuration Options
 
-Here is a list of all the configuration options this exporter provides:
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `generateDisclaimer` | boolean | `true` | Adds a `_comment` field indicating the file is auto-generated |
+| `tokenNameStyle` | enum | `camelCase` | Naming convention for token keys: `camelCase`, `kebabCase`, or `snakeCase` |
+| `colorFormat` | enum | `hex` | Color output format: `hex`, `rgba`, or `hsla` |
+| `includeDescriptions` | boolean | `true` | Includes token descriptions in the output |
+| `splitByTokenType` | boolean | `false` | Generates separate files per token type instead of a single `tokens.json` |
 
-- **generateDisclaimer:** Toggle to show a disclaimer indicating the file is auto-generated.
+Override defaults by editing `config.local.json`:
+
+```json
+{
+  "tokenNameStyle": "kebabCase",
+  "colorFormat": "rgba",
+  "splitByTokenType": true
+}
+```
+
+## Development
+
+```bash
+npm install
+npm run dev     # watch mode
+npm run build   # production build
+```

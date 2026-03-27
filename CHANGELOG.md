@@ -3,6 +3,11 @@ All the updates to this exporter are documented in this file.
 
 ## 1.0.0
 
-### 🚀 New
+### New
 
-This is the first release of this exporter!
+- JSON export of all design token types (color, typography, shadow, border, gradient, blur, dimension, size, space, opacity, fontSize, lineHeight, letterSpacing, paragraphSpacing, borderWidth, borderRadius, duration, zIndex, string, productCopy, fontFamily, fontWeight, textCase, textDecoration, visibility)
+- Configurable token name style (camelCase, kebabCase, snakeCase)
+- Configurable color format (hex, rgba, hsla)
+- Optional token descriptions in output
+- Single-file (`tokens.json`) or split-by-type output mode
+- Brand and theme filtering support

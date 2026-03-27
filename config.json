@@ -1,7 +1,39 @@
-[{
+[
+  {
     "key": "generateDisclaimer",
     "type": "boolean",
-    "default": false,
+    "default": true,
     "title": "Show Generated File Disclaimer",
-    "description": "When enabled, a disclaimer showing the fact that the file was generated automatically and should not be changed manually will appear in all style styles"
-}]
+    "description": "When enabled, a disclaimer comment will be added at the top of the generated JSON file(s) as a _comment property"
+  },
+  {
+    "key": "tokenNameStyle",
+    "type": "enum",
+    "options": ["camelCase", "kebabCase", "snakeCase"],
+    "default": "camelCase",
+    "title": "Token Name Style",
+    "description": "The naming convention used for token keys in the JSON output"
+  },
+  {
+    "key": "colorFormat",
+    "type": "enum",
+    "options": ["hex", "rgba", "hsla"],
+    "default": "hex",
+    "title": "Color Format",
+    "description": "The format used for color values in the JSON output"
+  },
+  {
+    "key": "includeDescriptions",
+    "type": "boolean",
+    "default": true,
+    "title": "Include Descriptions",
+    "description": "When enabled, token descriptions will be included in the JSON output as a description property"
+  },
+  {
+    "key": "splitByTokenType",
+    "type": "boolean",
+    "default": false,
+    "title": "Split by Token Type",
+    "description": "When enabled, separate JSON files are generated per token type (e.g. color.json, typography.json). When disabled, a single tokens.json is produced"
+  }
+]
