@@ -35,5 +35,20 @@
     "default": false,
     "title": "Split by Token Type",
     "description": "When enabled, separate JSON files are generated per token type (e.g. color.json, typography.json). When disabled, a single tokens.json is produced"
+  },
+  {
+    "key": "lengthOutputUnit",
+    "type": "enum",
+    "options": ["preserve", "px", "rem"],
+    "default": "preserve",
+    "title": "Length output (px / rem)",
+    "description": "For spacing, sizing, typography dimensions, border width, blur radius, and shadow offsets: preserve uses the token's native unit (px, rem, %); px converts rem-based lengths to px; rem converts pixel-based lengths to rem using Rem root (px)"
+  },
+  {
+    "key": "remRootPx",
+    "type": "number",
+    "default": 16,
+    "title": "Rem root (px)",
+    "description": "Assumed root font size in pixels when converting between px and rem (e.g. 16 means 1rem = 16px). Only used when Length output is px or rem."
   }
 ]

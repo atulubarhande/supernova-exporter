@@ -9,4 +9,8 @@ export type ExporterConfiguration = {
   colorFormat: "hex" | "rgba" | "hsla"
   includeDescriptions: boolean
   splitByTokenType: boolean
+  /** How to output CSS lengths: keep Supernova units, normalize to px, or normalize to rem */
+  lengthOutputUnit: "preserve" | "px" | "rem"
+  /** Root font size in px used when converting between px and rem */
+  remRootPx: number
 }

@@ -3,5 +3,7 @@
   "tokenNameStyle": "camelCase",
   "colorFormat": "hex",
   "includeDescriptions": true,
-  "splitByTokenType": false
+  "splitByTokenType": false,
+  "lengthOutputUnit": "preserve",
+  "remRootPx": 16
 }

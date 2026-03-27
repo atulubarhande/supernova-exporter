@@ -1,6 +1,12 @@
 ### Release Notes
 All the updates to this exporter are documented in this file.
 
+## Unreleased
+
+### New
+
+- `lengthOutputUnit` (`preserve` | `px` | `rem`) and `remRootPx` for normalizing applicable lengths
+
 ## 1.0.0
 
 ### New

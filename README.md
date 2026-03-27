@@ -73,6 +73,8 @@ When `splitByTokenType` is enabled, each type gets its own file (e.g. `color.jso
 | `colorFormat` | enum | `hex` | Color output format: `hex`, `rgba`, or `hsla` |
 | `includeDescriptions` | boolean | `true` | Includes token descriptions in the output |
 | `splitByTokenType` | boolean | `false` | Generates separate files per token type instead of a single `tokens.json` |
+| `lengthOutputUnit` | enum | `preserve` | Lengths for spacing, sizing, typography dimensions, border width, blur, and shadow offsets: `preserve` keeps Supernova units; `px` outputs px (converts `rem` tokens using `remRootPx`); `rem` outputs rem (converts `px` tokens using `remRootPx`). Percent, raw (unitless), and `ms` are unchanged. |
+| `remRootPx` | number | `16` | Root font size in px for px↔rem conversion when `lengthOutputUnit` is `px` or `rem`. |
 
 Override defaults by editing `config.local.json`:
 
@@ -80,7 +82,9 @@ Override defaults by editing `config.local.json`:
 {
   "tokenNameStyle": "kebabCase",
   "colorFormat": "rgba",
-  "splitByTokenType": true
+  "splitByTokenType": true,
+  "lengthOutputUnit": "rem",
+  "remRootPx": 16
 }
 ```
 

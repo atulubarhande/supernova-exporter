@@ -99,9 +99,52 @@ function unitSuffix(unit: Unit): string {
   }
 }
 
-function formatDimensionValue(value: { unit: Unit; measure: number }): string {
-  const num = parseFloat(value.measure.toFixed(3))
-  return `${num}${unitSuffix(value.unit)}`
+function remRoot(config: ExporterConfiguration): number {
+  const n = config.remRootPx
+  return Number.isFinite(n) && n > 0 ? n : 16
+}
+
+/** Supernova shadow offsets and blur radii are stored as pixel numbers without a unit field. */
+function formatShadowPixelLength(pxValue: number, config: ExporterConfiguration): number | string {
+  if (config.lengthOutputUnit === "preserve") {
+    return pxValue
+  }
+  const px = parseFloat(pxValue.toFixed(3))
+  if (config.lengthOutputUnit === "px") {
+    return `${px}px`
+  }
+  const rem = px / remRoot(config)
+  return `${parseFloat(rem.toFixed(4))}rem`
+}
+
+function formatDimensionValue(value: { unit: Unit; measure: number }, config: ExporterConfiguration): string {
+  const m = value.measure
+  const mode = config.lengthOutputUnit
+
+  switch (value.unit) {
+    case Unit.ms:
+      return `${parseFloat(m.toFixed(3))}ms`
+    case Unit.raw:
+      return String(parseFloat(m.toFixed(3)))
+    case Unit.percent:
+      return `${parseFloat(m.toFixed(3))}%`
+    case Unit.pixels: {
+      if (mode === "rem") {
+        const rem = m / remRoot(config)
+        return `${parseFloat(rem.toFixed(4))}rem`
+      }
+      return `${parseFloat(m.toFixed(3))}px`
+    }
+    case Unit.rem: {
+      if (mode === "px") {
+        const px = m * remRoot(config)
+        return `${parseFloat(px.toFixed(3))}px`
+      }
+      return `${parseFloat(m.toFixed(4))}rem`
+    }
+    default:
+      return `${parseFloat(m.toFixed(3))}${unitSuffix(value.unit)}`
+  }
 }
 
 export function convertToken(
@@ -159,15 +202,15 @@ function convertTypographyToken(token: TypographyToken, config: ExporterConfigur
   const entries: Record<string, { value: any; type: string }> = {
     fontFamily: { value: v.fontFamily.text, type: "fontFamily" },
     fontWeight: { value: v.fontWeight.text, type: "fontWeight" },
-    fontSize: { value: formatDimensionValue(v.fontSize), type: "fontSize" },
-    letterSpacing: { value: formatDimensionValue(v.letterSpacing), type: "letterSpacing" },
-    paragraphSpacing: { value: formatDimensionValue(v.paragraphSpacing), type: "paragraphSpacing" },
-    paragraphIndent: { value: formatDimensionValue(v.paragraphIndent), type: "paragraphSpacing" },
+    fontSize: { value: formatDimensionValue(v.fontSize, config), type: "fontSize" },
+    letterSpacing: { value: formatDimensionValue(v.letterSpacing, config), type: "letterSpacing" },
+    paragraphSpacing: { value: formatDimensionValue(v.paragraphSpacing, config), type: "paragraphSpacing" },
+    paragraphIndent: { value: formatDimensionValue(v.paragraphIndent, config), type: "paragraphSpacing" },
     textDecoration: { value: v.textDecoration.value, type: "textDecoration" },
     textCase: { value: v.textCase.value, type: "textCase" },
   }
   if (v.lineHeight) {
-    entries.lineHeight = { value: formatDimensionValue(v.lineHeight), type: "lineHeight" }
+    entries.lineHeight = { value: formatDimensionValue(v.lineHeight, config), type: "lineHeight" }
   }
   return { kind: "atomic", entries }
 }
@@ -175,10 +218,10 @@ function convertTypographyToken(token: TypographyToken, config: ExporterConfigur
 function convertShadowLayer(layer: ShadowTokenValue, config: ExporterConfiguration): Record<string, any> {
   return {
     color: formatColor(layer.color, config.colorFormat),
-    offsetX: layer.x,
-    offsetY: layer.y,
-    blur: layer.radius,
-    spread: layer.spread,
+    offsetX: formatShadowPixelLength(layer.x, config),
+    offsetY: formatShadowPixelLength(layer.y, config),
+    blur: formatShadowPixelLength(layer.radius, config),
+    spread: formatShadowPixelLength(layer.spread, config),
     type: layer.type,
   }
 }
@@ -193,7 +236,7 @@ function convertShadowToken(token: ShadowToken, config: ExporterConfiguration): 
 function convertBorderToken(token: BorderToken, config: ExporterConfiguration): Record<string, any> {
   return {
     color: formatColor(token.value.color, config.colorFormat),
-    width: formatDimensionValue(token.value.width),
+    width: formatDimensionValue(token.value.width, config),
     style: token.value.style,
     position: token.value.position,
   }
@@ -222,12 +265,12 @@ function convertGradientToken(token: GradientToken, config: ExporterConfiguratio
 function convertBlurToken(token: BlurToken, config: ExporterConfiguration): Record<string, any> {
   return {
     type: token.value.type,
-    radius: formatDimensionValue(token.value.radius),
+    radius: formatDimensionValue(token.value.radius, config),
   }
 }
 
-function convertDimensionToken(token: AnyDimensionToken, _config: ExporterConfiguration): string {
-  return formatDimensionValue(token.value)
+function convertDimensionToken(token: AnyDimensionToken, config: ExporterConfiguration): string {
+  return formatDimensionValue(token.value, config)
 }
 
 function convertStringToken(token: AnyStringToken, _config: ExporterConfiguration): string {
