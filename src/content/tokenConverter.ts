@@ -9,7 +9,6 @@ import {
   BorderToken,
   GradientToken,
   BlurToken,
-  DimensionToken,
   Unit,
   ColorTokenValue,
   ShadowTokenValue,
@@ -89,8 +88,20 @@ function formatColor(color: ColorTokenValue, colorFormat: ExporterConfiguration[
   return ColorHelper.formattedColor(color, COLOR_FORMAT_MAP[colorFormat], 3)
 }
 
+function unitSuffix(unit: Unit): string {
+  switch (unit) {
+    case Unit.pixels: return "px"
+    case Unit.percent: return "%"
+    case Unit.rem: return "rem"
+    case Unit.ms: return "ms"
+    case Unit.raw: return ""
+    default: return ""
+  }
+}
+
 function formatDimensionValue(value: { unit: Unit; measure: number }): string {
-  return DimensionToken.valueToString(value as any)
+  const num = parseFloat(value.measure.toFixed(3))
+  return `${num}${unitSuffix(value.unit)}`
 }
 
 export function convertToken(
@@ -216,7 +227,7 @@ function convertBlurToken(token: BlurToken, config: ExporterConfiguration): Reco
 }
 
 function convertDimensionToken(token: AnyDimensionToken, _config: ExporterConfiguration): string {
-  return DimensionToken.valueToString(token.value)
+  return formatDimensionValue(token.value)
 }
 
 function convertStringToken(token: AnyStringToken, _config: ExporterConfiguration): string {
