@@ -1,24 +1,30 @@
 {
-    "name": "@Promobi Technologies/json",
-    "version": "1.0.0",
-    "description": "[DESCRIPTION]",
-    "main": "index.js",
-    "scripts": {
-        "dev": "npx webpack --mode=development --watch",
-        "build": "npx webpack --mode=production"
-    },
-    "author": "[AUTHOR_NAME]",
-    "license": "MIT",
-    "dependencies": {
-        "@supernovaio/sdk-exporters": "^2.0.32",
-        "@supernovaio/export-helpers": "^1.0.30"
-    },
-    "devDependencies": {
-        "prettier": "3.0.3",
-        "ts-loader": "^7.0.5",
-        "typescript": "^5.2.2",
-        "webpack": "5.88.2",
-        "webpack-cli": "^5.1.4",
-        "terser-webpack-plugin": "5.3.9"
-    }
+  "name": "@promobi-technologies/exporter-style-dictionary",
+  "version": "2.5.0",
+  "description": "Export your design system tokens into Style Dictionary format using Supernova.io export engine",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx webpack --mode=development --watch",
+    "build": "npx webpack --mode=production"
+  },
+  "author": "Promobi Technologies",
+  "license": "MIT",
+  "dependencies": {
+    "@supernovaio/export-utils": "file:./utils"
+  },
+  "peerDependencies": {
+    "@supernovaio/sdk-exporters": "2.3.3"
+  },
+  "devDependencies": {
+    "@supernovaio/sdk-exporters": "2.3.3",
+    "prettier": "3.0.3",
+    "terser-webpack-plugin": "5.4.0",
+    "ts-loader": "^7.0.5",
+    "typescript": "^5.2.2",
+    "webpack": "5.105.4",
+    "webpack-cli": "6.0.1"
+  },
+  "resolutions": {
+    "@supernovaio/sdk-exporters": "2.3.3"
+  }
 }

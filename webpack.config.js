@@ -10,10 +10,13 @@ module.exports = (env, argv) => ({
     },
 
     module: {
-        rules: [{ test: /\.tsx?$/, use: "ts-loader", exclude: /node_modules/ }],
+        rules: [{
+            test: /\.tsx?$/,
+            use: "ts-loader",
+            exclude: [/node_modules/, path.resolve(__dirname, "utils")]
+        }],
     },
 
-    // Webpack tries these extensions for you if you omit the extension like "import './file'"
     resolve: {
         extensions: [".tsx", ".ts", ".jsx", ".js"],
         fallback: {
@@ -32,7 +35,6 @@ module.exports = (env, argv) => ({
             "crypto-browserify": false,
         },
     },
-
     output: {
         filename: "build.js",
         path: path.resolve(__dirname, "./dist/"),

@@ -1,16 +1,19 @@
 {
-    "id": "promobi-technologies.exporter-json",
-    "name": "JSON Exporter",
-    "description": "Export your design system tokens into structured JSON format",
+    "id": "promobi-technologies.exporter-style-dictionary",
+    "name": "Style Dictionary (Custom Typography)",
+    "description": "Export your design tokens to Style Dictionary format with atomic typography decomposition.",
     "author": "Promobi Technologies",
     "organization": "Promobi Technologies",
-    "version": "1.0.0",
+    "homepage": "https://supernova.io",
+    "version": "2.5.0",
     "usesBrands": true,
     "usesThemes": true,
     "executable": "/dist/build.js",
     "engine": "latest",
     "tags": [
+        "CSS",
         "Tokens",
-        "JSON"
+        "Style Dictionary",
+        "Typography"
     ]
 }

@@ -138,5 +138,9 @@ out
 
 # Build folders
 build/
+/dist/
 DerivedData/
 .build
+
+# Local config overrides
+config.local.json

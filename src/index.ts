@@ -1,7 +1,20 @@
-import { Supernova, PulsarContext, RemoteVersionIdentifier, AnyOutputFile, Token, TokenGroup, TokenType } from "@supernovaio/sdk-exporters"
-import { ExporterConfiguration } from "../config"
-import { FileHelper } from "@supernovaio/export-helpers"
-import { convertToken, tokenName, tokenTypeName, TokenJsonEntry, TypographyAtomicEntries } from "./content/tokenConverter"
+import { Supernova, PulsarContext, RemoteVersionIdentifier, AnyOutputFile, TokenType, TokenTheme } from "@supernovaio/sdk-exporters"
+import { ExporterConfiguration, ThemeExportStyle, FileStructure } from "../config"
+import { styleOutputFile, combinedStyleOutputFile } from "./files/style-file"
+import { StringCase, ThemeHelper } from "@supernovaio/export-utils"
+import { deepMerge } from "./utils/token-hierarchy"
+
+/** Exporter configuration from the resolved default configuration and user overrides */
+export const exportConfiguration = Pulsar.exportConfig<ExporterConfiguration>()
+
+/**
+ * Filters out null values from an array of output files
+ * @param files Array of output files that may contain null values
+ * @returns Array of non-null output files
+ */
+function processOutputFiles(files: Array<AnyOutputFile | null>): Array<AnyOutputFile> {
+    return files.filter((file): file is AnyOutputFile => file !== null);
+}
 
 Pulsar.export(async (sdk: Supernova, context: PulsarContext): Promise<Array<AnyOutputFile>> => {
   const remoteVersionIdentifier: RemoteVersionIdentifier = {
@@ -11,138 +24,184 @@ Pulsar.export(async (sdk: Supernova, context: PulsarContext): Promise<Array<AnyO
 
   let tokens = await sdk.tokens.getTokens(remoteVersionIdentifier)
   let tokenGroups = await sdk.tokens.getTokenGroups(remoteVersionIdentifier)
+  let tokenCollections = await sdk.tokens.getTokenCollections(remoteVersionIdentifier)
 
   if (context.brandId) {
     const brands = await sdk.brands.getBrands(remoteVersionIdentifier)
-    const brand = brands.find((b) => b.id === context.brandId || b.idInVersion === context.brandId)
+    const brand = brands.find((brand) => brand.id === context.brandId || brand.idInVersion === context.brandId)
     if (!brand) {
       throw new Error(`Unable to find brand ${context.brandId}.`)
     }
-    tokens = tokens.filter((t) => t.brandId === brand.id)
-    tokenGroups = tokenGroups.filter((tg) => tg.brandId === brand.id)
+
+    tokens = tokens.filter((token) => token.brandId === brand.id)
+    tokenGroups = tokenGroups.filter((tokenGroup) => tokenGroup.brandId === brand.id)
   }
 
   if (context.themeIds && context.themeIds.length > 0) {
     const themes = await sdk.tokens.getTokenThemes(remoteVersionIdentifier)
     const themesToApply = context.themeIds.map((themeId) => {
-      const theme = themes.find((t) => t.id === themeId || t.idInVersion === themeId)
+      const theme = themes.find((theme) => theme.id === themeId || theme.idInVersion === themeId)
       if (!theme) {
-        throw new Error(`Unable to find theme ${themeId}.`)
+        throw new Error(`Unable to find theme ${themeId}`)
       }
       return theme
     })
-    tokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, themesToApply)
-  }
+    
+    switch (exportConfiguration.exportThemesAs) {
+      case ThemeExportStyle.NestedThemes:
+        if (exportConfiguration.fileStructure === FileStructure.SingleFile) {
+          const baseFile = exportConfiguration.exportBaseValues
+            ? combinedStyleOutputFile(tokens, tokenGroups, '', undefined, tokenCollections)
+            : null
 
-  const tokensByType = groupTokensByType(tokens)
+          const themeFiles = themesToApply.map((theme) => {
+            const themedTokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, [theme])
+            const originalExportBaseValues = exportConfiguration.exportBaseValues
+            exportConfiguration.exportBaseValues = false
+            const file = combinedStyleOutputFile(themedTokens, tokenGroups, '', theme, tokenCollections)
+            exportConfiguration.exportBaseValues = originalExportBaseValues
+            return file
+          })
 
-  if (exportConfiguration.splitByTokenType) {
-    return buildMultiFileOutput(tokensByType, tokenGroups)
-  }
-  return buildSingleFileOutput(tokensByType, tokenGroups)
-})
+          const mergedFile = [baseFile, ...themeFiles].reduce((merged, file) => {
+            if (!file) return merged
+            if (!merged) return file
 
-export const exportConfiguration = Pulsar.exportConfig<ExporterConfiguration>()
+            const mergedContent = deepMerge(
+              JSON.parse(merged.content),
+              JSON.parse(file.content)
+            )
 
-function groupTokensByType(tokens: Array<Token>): Map<TokenType, Array<Token>> {
-  const map = new Map<TokenType, Array<Token>>()
-  for (const token of tokens) {
-    const list = map.get(token.tokenType) ?? []
-    list.push(token)
-    map.set(token.tokenType, list)
-  }
-  return map
-}
+            return {
+              ...file,
+              content: JSON.stringify(mergedContent, null, exportConfiguration.indent)
+            }
+          }, null)
 
-function isAtomicResult(value: any): value is TypographyAtomicEntries {
-  return value && typeof value === "object" && value.kind === "atomic"
-}
-
-function buildTokenEntries(
-  tokens: Array<Token>,
-  tokenGroups: Array<TokenGroup>
-): Record<string, TokenJsonEntry> {
-  const result: Record<string, TokenJsonEntry> = {}
-  for (const token of tokens) {
-    const name = tokenName(token, tokenGroups, exportConfiguration)
-    const converted = convertToken(token, exportConfiguration)
-    if (converted === null) continue
-
-    if (isAtomicResult(converted)) {
-      for (const [suffix, sub] of Object.entries(converted.entries)) {
-        const atomicKey = `${name}${suffix.charAt(0).toUpperCase()}${suffix.slice(1)}`
-        const entry: TokenJsonEntry = { value: sub.value, type: sub.type }
-        if (exportConfiguration.includeDescriptions && token.description) {
-          entry.description = token.description
+          return processOutputFiles([mergedFile])
         }
-        result[atomicKey] = entry
-      }
-    } else {
-      const entry: TokenJsonEntry = {
-        value: converted,
-        type: tokenTypeName(token.tokenType),
-      }
-      if (exportConfiguration.includeDescriptions && token.description) {
-        entry.description = token.description
-      }
-      result[name] = entry
+
+        const valueObjectFiles = Object.values(TokenType)
+          .map((type) => {
+            const baseFile = exportConfiguration.exportBaseValues
+              ? styleOutputFile(type, tokens, tokenGroups, '', undefined, tokenCollections)
+              : null
+
+            const themeFiles = themesToApply.map((theme) => {
+              const themedTokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, [theme])
+              const originalExportBaseValues = exportConfiguration.exportBaseValues
+              exportConfiguration.exportBaseValues = false
+              const file = styleOutputFile(type, themedTokens, tokenGroups, '', theme, tokenCollections)
+              exportConfiguration.exportBaseValues = originalExportBaseValues
+              return file
+            })
+
+            return [baseFile, ...themeFiles].reduce((merged, file) => {
+              if (!file) return merged
+              if (!merged) return file
+
+              const mergedContent = deepMerge(
+                JSON.parse(merged.content),
+                JSON.parse(file.content)
+              )
+
+              return {
+                ...file,
+                content: JSON.stringify(mergedContent, null, exportConfiguration.indent)
+              }
+            }, null)
+          })
+        return processOutputFiles(valueObjectFiles)
+
+      case ThemeExportStyle.SeparateFiles:
+        if (exportConfiguration.fileStructure === FileStructure.SingleFile) {
+          const themeFiles = themesToApply.map((theme) => {
+            const themedTokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, [theme])
+            const themePath = ThemeHelper.getThemeIdentifier(theme, StringCase.camelCase)
+            return combinedStyleOutputFile(themedTokens, tokenGroups, themePath, theme, tokenCollections)
+          })
+          
+          const baseFile = exportConfiguration.exportBaseValues
+            ? combinedStyleOutputFile(tokens, tokenGroups, '', undefined, tokenCollections)
+            : null
+
+          return processOutputFiles([baseFile, ...themeFiles])
+        }
+
+        const themeFiles = themesToApply.flatMap((theme) => {
+          const themedTokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, [theme])
+          const themePath = ThemeHelper.getThemeIdentifier(theme, StringCase.camelCase)
+          return Object.values(TokenType)
+            .map((type) => styleOutputFile(type, themedTokens, tokenGroups, themePath, theme, tokenCollections))
+        })
+        
+        const baseFiles = exportConfiguration.exportBaseValues
+          ? Object.values(TokenType)
+              .map((type) => styleOutputFile(type, tokens, tokenGroups, '', undefined, tokenCollections))
+          : []
+
+        return processOutputFiles([
+          ...baseFiles, 
+          ...themeFiles
+        ])
+
+      case ThemeExportStyle.MergedTheme:
+        if (exportConfiguration.fileStructure === FileStructure.SingleFile) {
+          const baseFile = exportConfiguration.exportBaseValues
+            ? combinedStyleOutputFile(tokens, tokenGroups, '', undefined, tokenCollections)
+            : null
+
+          const themedTokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, themesToApply)
+          const mergedThemeFile = combinedStyleOutputFile(
+            themedTokens,
+            tokenGroups,
+            'themed',
+            themesToApply[0],
+            tokenCollections
+          )
+
+          return processOutputFiles([baseFile, mergedThemeFile])
+        }
+
+        const baseTokenFiles = exportConfiguration.exportBaseValues
+          ? Object.values(TokenType)
+              .map((type) => styleOutputFile(type, tokens, tokenGroups, '', undefined, tokenCollections))
+          : []
+
+        const themedTokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, themesToApply)
+        const mergedThemeFiles = Object.values(TokenType)
+          .map((type) => styleOutputFile(
+            type, 
+            themedTokens, 
+            tokenGroups, 
+            'themed',
+            themesToApply[0],
+            tokenCollections
+          ))
+
+        const mergedFiles = [
+          ...baseTokenFiles, 
+          ...mergedThemeFiles
+        ]
+        return processOutputFiles(mergedFiles)
+
+      case ThemeExportStyle.ApplyDirectly:
+        tokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, themesToApply)
+        break
     }
   }
-  return result
-}
 
-function buildSingleFileOutput(
-  tokensByType: Map<TokenType, Array<Token>>,
-  tokenGroups: Array<TokenGroup>
-): Array<AnyOutputFile> {
-  const output: Record<string, Record<string, TokenJsonEntry>> = {}
-
-  for (const [type, tokens] of tokensByType) {
-    const typeName = tokenTypeName(type)
-    const entries = buildTokenEntries(tokens, tokenGroups)
-    if (Object.keys(entries).length > 0) {
-      output[typeName] = entries
-    }
+  if (exportConfiguration.fileStructure === FileStructure.SingleFile) {
+    const defaultFile = exportConfiguration.exportBaseValues
+      ? combinedStyleOutputFile(tokens, tokenGroups, '', undefined, tokenCollections)
+      : null
+    return processOutputFiles([defaultFile])
   }
 
-  let json: any = output
-  if (exportConfiguration.generateDisclaimer) {
-    json = { _comment: "This file was generated by Supernova, don't change by hand", ...output }
-  }
-
-  return [
-    FileHelper.createTextFile({
-      relativePath: "./",
-      fileName: "tokens.json",
-      content: JSON.stringify(json, null, 2),
-    }),
-  ]
-}
-
-function buildMultiFileOutput(
-  tokensByType: Map<TokenType, Array<Token>>,
-  tokenGroups: Array<TokenGroup>
-): Array<AnyOutputFile> {
-  const files: Array<AnyOutputFile> = []
-
-  for (const [type, tokens] of tokensByType) {
-    const typeName = tokenTypeName(type)
-    const entries = buildTokenEntries(tokens, tokenGroups)
-    if (Object.keys(entries).length === 0) continue
-
-    let json: any = entries
-    if (exportConfiguration.generateDisclaimer) {
-      json = { _comment: "This file was generated by Supernova, don't change by hand", ...entries }
-    }
-
-    files.push(
-      FileHelper.createTextFile({
-        relativePath: "./",
-        fileName: `${typeName}.json`,
-        content: JSON.stringify(json, null, 2),
-      })
-    )
-  }
-
-  return files
-}
+  const defaultFiles = exportConfiguration.exportBaseValues
+    ? Object.values(TokenType)
+        .map((type) => styleOutputFile(type, tokens, tokenGroups, '', undefined, tokenCollections))
+    : []
+  
+  return processOutputFiles(defaultFiles)
+})
